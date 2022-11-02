@@ -1,4 +1,3 @@
-// app/components/form-field.tsx
 interface FormFieldProps {
   htmlFor: string;
   label: string;
@@ -24,7 +23,7 @@ export function FormField({
         type={type}
         id={htmlFor}
         name={htmlFor}
-        className='p-2 rounded-xl my-2'
+        className='w-full p-2 rounded-xl my-2'
         value={value}
       />
     </>
