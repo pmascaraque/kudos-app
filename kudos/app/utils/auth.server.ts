@@ -3,6 +3,7 @@ import { prisma } from "./prisma.server";
 import type { RegisterForm, LoginForm } from "./types.server";
 import { createUser } from "./users.server";
 import bcrypt from "bcryptjs";
+import { Form } from "@remix-run/react";
 
 const secret = process.env.SESSION_SECRET;
 if (!secret) {
@@ -51,7 +52,7 @@ export const login = async (form: LoginForm) => {
     where: { email: form.email }
   });
 
-  if (!user || (await bcrypt.compare(form.password, user.password))) {
+  if (!user || !(await bcrypt.compare(form.password, user.password))) {
     return json({ error: `Incorrect login` }, { status: 400 })
   }
 
