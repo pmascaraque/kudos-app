@@ -11,24 +11,25 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profile   Profile
-  authoredKudos Kudo[]  @relation("AuthoredKudos")
-  kudos         Kudo[]  @relation("RecievedKudos")
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  password      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  profile       Profile
+  authoredKudos Kudo[]   @relation("AuthoredKudos")
+  kudos         Kudo[]   @relation("RecievedKudos")
 }
 
 model Kudo {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt DateTime   @default(now())
-  style     KudoStyle?
-  author User @relation(references: [id], fields: [authorId], "AuthoredKudos")
-  authorId String @db.ObjectId
-  recepient User @relation(references: [id], fields: [recepientId], "RecievedKudos")
-  recepientId String @db.ObjectId
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt   DateTime   @default(now())
+  style       KudoStyle?
+  message     String
+  author      User       @relation(references: [id], fields: [authorId], "AuthoredKudos")
+  authorId    String     @db.ObjectId
+  recepient   User       @relation(references: [id], fields: [recepientId], "RecievedKudos")
+  recepientId String     @db.ObjectId
 }
 
 type KudoStyle {
