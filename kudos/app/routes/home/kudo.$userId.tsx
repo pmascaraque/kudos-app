@@ -1,6 +1,6 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useActionData, useLoaderData } from "@remix-run/react";
 import React, { useState } from "react";
 import { Modal } from "~/components/modal";
 import { UserCircle } from "~/components/user-circle";
@@ -8,8 +8,46 @@ import { getUserById } from "~/utils/users.server";
 import { SelectBox } from "~/components/select-box";
 import { colorMap, emojiMap } from "~/utils/constants";
 import type { KudoStyle } from "@prisma/client";
-import { getUser } from "~/utils/auth.server";
+import { getUser, requireUserId } from "~/utils/auth.server";
 import { Kudo } from "~/components/kudo";
+import { createKudo } from "~/utils/kudo.server";
+
+export const action: ActionFunction = async ({ request }) => {
+  const form = await request.formData();
+  const userId = await requireUserId(request);
+
+  const message = form.get("message");
+  const backgroundColor = form.get("backgroundColor");
+  const textColor = form.get("textColor");
+  const emoji = form.get("emoji");
+  const recipientId = form.get("recipientId");
+
+  if (
+    typeof message !== "string" ||
+    typeof recipientId !== "string" ||
+    typeof backgroundColor !== "string" ||
+    typeof textColor !== "string" ||
+    typeof emoji !== "string"
+  ) {
+    return json({ error: `Invalid Form Data` }, { status: 400 });
+  }
+
+  if (!message.length) {
+    return json({ error: `Please provide a message.` }, { status: 400 });
+  }
+
+  if (!recipientId.length) {
+    return json({ error: `No recipient found...` }, { status: 400 });
+  }
+
+  await createKudo(message, userId, recipientId, {
+    backgroundColor,
+    textColor,
+    emoji
+  } as KudoStyle);
+
+  return redirect("/home");
+};
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { userId } = params;
@@ -22,6 +60,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 };
 
 export default function KudoModal() {
+  const actionData = useActionData();
+  const [formError] = useState(actionData?.error || "");
   const [formData, setFormData] = useState({
     message: "",
     style: {
@@ -66,7 +106,9 @@ export default function KudoModal() {
   const { recipient, user } = useLoaderData();
   return (
     <Modal isOpen={true} className='w-2/3 p-10'>
-      <div className='text-xs font-semibold text-center tracking-wide text-red-500 w-full mb-2'></div>
+      <div className='text-xs font-semibold text-center tracking-wide text-red-500 w-full mb-2'>
+        {formError}
+      </div>
       <form method='post'>
         <input type='hidden' value={recipient.id} name='recipientId' />
         <div className='flex flex-col md:flex-row gap-y-2 md:gap-y-0'>

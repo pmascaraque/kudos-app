@@ -28,8 +28,8 @@ model Kudo {
   message     String
   author      User       @relation(references: [id], fields: [authorId], "AuthoredKudos")
   authorId    String     @db.ObjectId
-  recepient   User       @relation(references: [id], fields: [recepientId], "RecievedKudos")
-  recepientId String     @db.ObjectId
+  recipient   User       @relation(references: [id], fields: [recipientId], "RecievedKudos")
+  recipientId String     @db.ObjectId
 }
 
 type KudoStyle {
