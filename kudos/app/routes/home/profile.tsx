@@ -1,12 +1,58 @@
-import type { LoaderFunction } from "@remix-run/node";
+import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import React, { useState } from "react";
 import { FormField } from "~/components/form-field";
 import { Modal } from "~/components/modal";
 import { SelectBox } from "~/components/select-box";
-import { getUser } from "~/utils/auth.server";
+import { getUser, requireUserId } from "~/utils/auth.server";
 import { departments } from "~/utils/constants";
+import { updateUser } from "~/utils/users.server";
+import { validateName } from "~/utils/validators.server";
+import type { Department } from "@prisma/client";
+
+
+export const action: ActionFunction = async ({ request }) => {
+  const userId = await requireUserId(request);
+  const form = await request.formData();
+
+  let firstName = form.get("firstName");
+  let lastName = form.get("lastName");
+  let department = form.get("department");
+  const action = form.get("_action");
+
+  switch (action) {
+    case "save": {
+      if (
+        typeof firstName !== "string" ||
+        typeof lastName !== "string" ||
+        typeof department !== "string"
+      ) {
+        return json({ error: "Invalid Form Data" }, { status: 400 });
+      }
+
+      const errors = {
+        firstName: validateName(firstName),
+        lastName: validateName(lastName),
+        department: validateName(department),
+      };
+
+      if (Object.values(errors).some(Boolean))
+        return json(
+          { errors, fields: { department, firstName, lastName } },
+          { status: 400 }
+        );
+
+      await updateUser(userId, {
+        firstName,
+        lastName,
+        department: department as Department
+      });
+    }
+    default:
+      return json({ error: "Invalid Form Data" }, { status: 400 });
+  }
+};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await getUser(request);
@@ -37,7 +83,7 @@ export default function Profile() {
         <div className='flex'>
           <div className='w-1/3'></div>
           <div className='flex-1'>
-            <form>
+            <form method="post">
               <FormField
                 htmlFor='firstName'
                 label='First Name'

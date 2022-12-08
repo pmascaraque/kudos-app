@@ -41,6 +41,7 @@ type KudoStyle {
 type Profile {
   firstName String
   lastName  String
+  department Department?
 }
 
 enum Emoji {
