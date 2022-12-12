@@ -5,9 +5,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { FormField } from "~/components/form-field";
 import { Modal } from "~/components/modal";
 import { SelectBox } from "~/components/select-box";
-import { getUser, requireUserId } from "~/utils/auth.server";
+import { getUser, logout, requireUserId } from "~/utils/auth.server";
 import { departments } from "~/utils/constants";
-import { updateUser } from "~/utils/users.server";
+import { deleteUser, updateUser } from "~/utils/users.server";
 import { validateName } from "~/utils/validators.server";
 import type { Department } from "@prisma/client";
 
@@ -19,7 +19,6 @@ export const action: ActionFunction = async ({ request }) => {
   let lastName = form.get("lastName");
   let department = form.get("department");
   const action = form.get("_action");
-  
 
   switch (action) {
     case "save": {
@@ -49,6 +48,9 @@ export const action: ActionFunction = async ({ request }) => {
         department: department as Department,
       });
     }
+    case "delete":
+      await deleteUser(userId);
+      return logout(request);
     default:
       return json({ error: "Invalid Form Data" }, { status: 400 });
   }
@@ -67,9 +69,13 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     firstName: actionData?.fields?.firstName || user?.profile?.firstName,
     lastName: actionData?.fields?.lastName || user?.profile?.lastName,
-    department: actionData?.fields?.department || (user?.profile?.department || 'MARKETING'),
-    profilePicture: actionData?.fields?.profilePicture || user?.profile?.profilePicture || ''
- })
+    department:
+      actionData?.fields?.department ||
+      user?.profile?.department ||
+      "MARKETING",
+    profilePicture:
+      actionData?.fields?.profilePicture || user?.profile?.profilePicture || "",
+  });
 
   useEffect(() => {
     if (!firstLoad.current) {
@@ -99,7 +105,7 @@ export default function Profile() {
         <div className='flex'>
           <div className='w-1/3'></div>
           <div className='flex-1'>
-            <form method='post'>
+            <form method='post' onSubmit={e => !confirm('Are you sure?') ? e.preventDefault() : true}>
               <FormField
                 htmlFor='firstName'
                 label='First Name'
@@ -123,6 +129,13 @@ export default function Profile() {
                 value={formData.department}
                 onChange={(e) => handleInputChange(e, "department")}
               />
+              <button
+                name='_action'
+                value='delete'
+                className='rounded-xl w-full bg-red-300 font-semibold text-white mt-4 px-16 py-2 transition duration-300 ease-in-out hover:bg-red-400 hover:-translate-y-1'
+              >
+                Delete Account
+              </button>
               <div className='w-full text-right mt-4'>
                 <button
                   className='rounded-xl bg-yellow-300 font-semibold text-blue-600 px-16 py-2 transition duration-300 ease-in-out hover:bg-yellow-400 hover:-translate-y-1'
